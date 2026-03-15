@@ -481,7 +481,10 @@
             <div class="modules-grid">
                 <label class="checkbox-row"><input type="checkbox" id="inp-show-bl"> BeatLeader Меню</label>
                 <label class="checkbox-row"><input type="checkbox" id="inp-show-cover"> Обложка трека</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-songinfo"> Инфо трека (Текст)</label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-title"> Название трека</label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-artist"> Исполнитель / Маппер</label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-meta"> Сложность и BPM</label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-bsr"> BSR код и Дата</label>
                 <label class="checkbox-row"><input type="checkbox" id="inp-show-progress"> Прогресс-бар</label>
                 <label class="checkbox-row"><input type="checkbox" id="inp-show-hp"> HP Бар (Здоровье)</label>
                 <label class="checkbox-row"><input type="checkbox" id="inp-show-stats"> Miss / Combo</label>
@@ -511,6 +514,8 @@
             time: document.getElementById('time-prog'),
             title: document.getElementById('title'),
             artist: document.getElementById('artist-mapper'),
+            metaLine: document.getElementById('meta-line'),
+            bsrLine: document.getElementById('bsr-line'),
             diff: document.getElementById('difficulty'),
             bpm: document.getElementById('bpm'),
             key: document.getElementById('key'),
@@ -545,9 +550,11 @@
             showBL: true, 
             showDebugUI: true, 
             glowAvatar: true,
-            // Новые модули
             showCover: true,
-            showSongInfo: true,
+            showTitle: true,
+            showArtist: true,
+            showMeta: true,
+            showBsr: true,
             showProgress: true,
             showHp: true,
             showStats: true,
@@ -588,9 +595,13 @@
             document.getElementById('inp-show-debug').checked = config.showDebugUI !== false;
             document.getElementById('inp-glow-avatar').checked = config.glowAvatar !== false;
             
-            // Новые чекбоксы модулей
             document.getElementById('inp-show-cover').checked = config.showCover !== false;
-            document.getElementById('inp-show-songinfo').checked = config.showSongInfo !== false;
+            
+            document.getElementById('inp-show-title').checked = config.showTitle !== false;
+            document.getElementById('inp-show-artist').checked = config.showArtist !== false;
+            document.getElementById('inp-show-meta').checked = config.showMeta !== false;
+            document.getElementById('inp-show-bsr').checked = config.showBsr !== false;
+            
             document.getElementById('inp-show-progress').checked = config.showProgress !== false;
             document.getElementById('inp-show-hp').checked = config.showHp !== false;
             document.getElementById('inp-show-stats').checked = config.showStats !== false;
@@ -609,9 +620,13 @@
             config.showDebugUI = document.getElementById('inp-show-debug').checked;
             config.glowAvatar = document.getElementById('inp-glow-avatar').checked;
             
-            // Сохраняем состояние модулей
             config.showCover = document.getElementById('inp-show-cover').checked;
-            config.showSongInfo = document.getElementById('inp-show-songinfo').checked;
+            
+            config.showTitle = document.getElementById('inp-show-title').checked;
+            config.showArtist = document.getElementById('inp-show-artist').checked;
+            config.showMeta = document.getElementById('inp-show-meta').checked;
+            config.showBsr = document.getElementById('inp-show-bsr').checked;
+            
             config.showProgress = document.getElementById('inp-show-progress').checked;
             config.showHp = document.getElementById('inp-show-hp').checked;
             config.showStats = document.getElementById('inp-show-stats').checked;
@@ -671,29 +686,29 @@
         }
 
         function applyModules() {
-            // Управление отображением обложки и текста
             els.coverWrapper.style.display = config.showCover ? 'flex' : 'none';
-            els.textBlock.style.display = config.showSongInfo ? 'flex' : 'none';
             
-            // Если и обложка и текст выключены - скрываем весь верхний ряд
-            const showHeader = config.showCover || config.showSongInfo;
+            els.title.style.display = config.showTitle ? '' : 'none';
+            els.artist.style.display = config.showArtist ? '' : 'none';
+            els.metaLine.style.display = config.showMeta ? '' : 'none';
+            els.bsrLine.style.display = config.showBsr ? '' : 'none';
+            
+            const showAnyText = config.showTitle || config.showArtist || config.showMeta || config.showBsr;
+            els.textBlock.style.display = showAnyText ? 'flex' : 'none';
+            
+            const showHeader = config.showCover || showAnyText;
             els.headerRow.style.display = showHeader ? 'flex' : 'none';
             
-            // Прогресс бар
             els.statsRow.style.display = config.showProgress ? 'flex' : 'none';
             
-            // Если выключено вообще всё внутри стеклянной панели - скрываем саму панель
             const showTopPanel = showHeader || config.showProgress;
             els.topGlassPanel.style.display = showTopPanel ? 'flex' : 'none';
 
-            // HP Бар
             els.hpBarWrapper.style.display = config.showHp ? 'flex' : 'none';
             
-            // Статистика внизу (Мисс/Комбо и Точность)
             els.bottomStatRow.style.display = config.showStats ? 'flex' : 'none';
             els.accLarge.style.display = config.showAcc ? 'flex' : 'none';
             
-            // Если выключены обе нижние статистики - скрываем их общий контейнер
             const showBottomStats = config.showStats || config.showAcc;
             els.bottomStats.style.display = showBottomStats ? 'flex' : 'none';
         }
