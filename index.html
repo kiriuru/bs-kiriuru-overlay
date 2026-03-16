@@ -566,8 +566,20 @@
         let reconnectTimeout = null;
         let debugTimeout = null;
         let duration = 0;
+        
+        // Переменные для BeatLeader
         let lastBlFetch = 0;
-        let blFailCount = 0; 
+        let isFetchingBL = false;
+        let currentProxyIdx = 0; 
+        
+        // Массив прокси (первый элемент пустой - попытка загрузки напрямую, т.к. API BL поддерживает CORS)
+        const proxies = [
+            "", 
+            "https://api.codetabs.com/v1/proxy?quest=",
+            "https://api.allorigins.win/raw?url=",
+            "https://corsproxy.io/?",
+            "https://thingproxy.freeboard.io/fetch/"
+        ];
 
         function init() {
             els.app.style.display = 'none';
@@ -577,6 +589,9 @@
             applyModules();
             applyGlow();
             connectWS();
+            
+            // Фоновое обновление профиля каждые 15 минут
+            setInterval(() => fetchBL(), 900000);
             
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'F2') els.settings.classList.toggle('show');
@@ -793,49 +808,68 @@
 
         async function fetchBL(force = false) {
             if (!config.blId || !config.showBL) return;
+            if (isFetchingBL) return;
             if (!force && Date.now() - lastBlFetch < 900000) return;
             
-            try {
-                const isNumeric = /^\d+$/.test(config.blId);
-                let originalUrl;
-                if (isNumeric) {
-                    originalUrl = `https://api.beatleader.xyz/player/${config.blId}?stats=true`;
-                } else {
-                    originalUrl = `https://api.beatleader.xyz/players?search=${encodeURIComponent(config.blId)}`;
+            isFetchingBL = true;
+            
+            const isNumeric = /^\d+$/.test(config.blId);
+            const originalUrl = isNumeric
+                ? `https://api.beatleader.com/player/${config.blId}?stats=true`
+                : `https://api.beatleader.com/players?search=${encodeURIComponent(config.blId)}`;
+                
+            let success = false;
+            let attempts = 0;
+            const maxAttempts = 5;
+
+            while (!success && attempts < maxAttempts) {
+                try {
+                    const proxy = proxies[currentProxyIdx % proxies.length];
+                    const targetUrl = proxy ? proxy + encodeURIComponent(originalUrl) : originalUrl;
+                    
+                    showDebug(`BL Fetch [${attempts + 1}/${maxAttempts}] via ${proxy ? 'Proxy' : 'Direct'}`);
+                    
+                    const res = await fetch(targetUrl, { headers: { 'Accept': 'application/json' } });
+                    
+                    if (!res.ok) throw new Error(`Network error: ${res.status}`);
+                    
+                    const json = await res.json();
+                    const player = json.data ? json.data[0] : json;
+                    
+                    if (!player || !player.name) throw new Error("Player not found");
+                    
+                    els.blName.textContent = player.name || "Unknown";
+                    els.blGlobal.textContent = player.rank ? `#${player.rank.toLocaleString()}` : "#--";
+                    els.blLocal.textContent = player.countryRank ? `#${player.countryRank.toLocaleString()} (${player.country || 'N/A'})` : "#-- (N/A)";
+                    els.blPp.textContent = player.pp ? `${Math.round(player.pp).toLocaleString()}` : "--";
+                    
+                    if (player.avatar) {
+                        els.blAvatar.src = player.avatar;
+                        els.blAvatarWrapper.style.display = 'block'; 
+                    } else {
+                        els.blAvatarWrapper.style.display = 'none';
+                    }
+                    
+                    lastBlFetch = Date.now();
+                    success = true;
+                    showDebug(`BL Profile Loaded Successfully!`);
+                } catch (err) {
+                    attempts++;
+                    currentProxyIdx++; // Пробуем следующий прокси
+                    showDebug(`BL Error: ${err.message}. Retrying...`);
+                    
+                    if (attempts < maxAttempts) {
+                        await new Promise(r => setTimeout(r, 2000)); // Задержка 2 сек перед следующей попыткой
+                    }
                 }
-                
-                const proxiedUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(originalUrl)}`;
-                const res = await fetch(proxiedUrl, { headers: { 'Accept': 'application/json' } });
-                
-                if (!res.ok) throw new Error(`Network error: ${res.status}`);
-                
-                const json = await res.json();
-                const player = json.data ? json.data[0] : json;
-                
-                if (!player || !player.name) throw new Error("Player not found");
-                
-                els.blName.textContent = player.name || "Unknown";
-                els.blGlobal.textContent = player.rank ? `#${player.rank.toLocaleString()}` : "#--";
-                els.blLocal.textContent = player.countryRank ? `#${player.countryRank.toLocaleString()} (${player.country || 'N/A'})` : "#-- (N/A)";
-                els.blPp.textContent = player.pp ? `${Math.round(player.pp).toLocaleString()}` : "--";
-                
-                if (player.avatar) {
-                    els.blAvatar.src = player.avatar;
-                    els.blAvatarWrapper.style.display = 'block'; 
-                } else {
-                    els.blAvatarWrapper.style.display = 'none';
-                }
-                
-                lastBlFetch = Date.now();
-                blFailCount = 0; 
-            } catch (err) {
-                blFailCount++;
-                if (blFailCount >= 5) { 
-                    showDebug(`BL Error: ${err.message} (${blFailCount} fails)`);
-                }
-                els.blName.textContent = "Error loading profile";
-                console.error("BeatLeader fetch failed:", err);
             }
+
+            if (!success) {
+                els.blName.textContent = "Error loading profile";
+                showDebug(`BL Fetch failed completely after ${maxAttempts} attempts.`);
+            }
+            
+            isFetchingBL = false;
         }
 
         function connectWS() {
