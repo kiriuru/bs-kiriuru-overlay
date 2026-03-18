@@ -35,7 +35,7 @@
         #app-container {
             position: absolute;
             transition: transform 0.3s ease;
-            display: flex; /* Скрывается/показывается через JS */
+            display: flex;
             flex-direction: column;
             gap: 10px;
             width: max-content;
@@ -398,7 +398,7 @@
                     <img id="bl-avatar" src="" alt="Avatar">
                 </div>
                 <div id="bl-info">
-                    <div id="bl-name">Loading...</div>
+                    <div id="bl-name" data-i18n="loading">Loading...</div>
                     <div class="bl-stat-compact">Global: <span id="bl-global">#--</span></div>
                     <div class="bl-stat-compact">Local: <span id="bl-local">#--</span></div>
                     <div class="bl-stat-compact">PP: <span id="bl-pp">-- pp</span></div>
@@ -413,7 +413,7 @@
                         <img id="cover" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==" alt="Cover">
                     </div>
                     <div id="text-block">
-                        <div id="title">Waiting for song...</div>
+                        <div id="title" data-i18n="waitingSong">Waiting for song...</div>
                         <div id="artist-mapper">-</div>
                         <div id="meta-line">
                             <span id="difficulty">-</span>
@@ -453,13 +453,22 @@
     </div>
 
     <div id="settings-modal">
-        <h2>SYSTEM SETUP [F2]</h2>
+        <h2 data-i18n="sysSetup">SYSTEM SETUP [F2]</h2>
+        
+        <div class="setting-row">
+            <label style="font-size: 12px; color: #ccc;" data-i18n="langLabel">Language / Язык</label>
+            <div class="radio-grid">
+                <label class="radio-label"><input type="radio" name="lang" value="en"> English</label>
+                <label class="radio-label"><input type="radio" name="lang" value="ru"> Русский</label>
+            </div>
+        </div>
+
         <div class="setting-row">
             <label style="font-size: 12px; color: #ccc;">WebSocket URL</label>
             <input type="text" id="inp-ws" placeholder="ws://127.0.0.1:2947/socket">
         </div>
         <div class="setting-row">
-            <label style="font-size: 12px; color: #ccc;">Layout (Выравнивание)</label>
+            <label style="font-size: 12px; color: #ccc;" data-i18n="layoutLabel">Layout</label>
             <div class="radio-grid">
                 <label class="radio-label"><input type="radio" name="layout" value="top-left"> Top Left</label>
                 <label class="radio-label"><input type="radio" name="layout" value="top-right"> Top Right</label>
@@ -468,40 +477,92 @@
             </div>
         </div>
         <div class="setting-row">
-            <label style="font-size: 12px; color: #ccc;">Scale (0.5 - 2.0)</label>
+            <label style="font-size: 12px; color: #ccc;" data-i18n="scaleLabel">Scale</label>
             <input type="number" step="0.1" id="inp-scale">
         </div>
         <div class="setting-row">
-            <label style="font-size: 12px; color: #ccc;">BeatLeader ID / Nickname</label>
-            <input type="text" id="inp-bl" placeholder="Например: 76561198029377687">
+            <label style="font-size: 12px; color: #ccc;" data-i18n="blLabel">BeatLeader ID / Nickname</label>
+            <input type="text" id="inp-bl">
         </div>
         
         <div class="setting-row">
-            <label style="font-size: 12px; color: #ccc; margin-top: 5px;">Модули отображения (Вкл/Выкл)</label>
+            <label style="font-size: 12px; color: #ccc; margin-top: 5px;" data-i18n="modulesLabel">Display Modules</label>
             <div class="modules-grid">
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-bl"> BeatLeader Меню</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-cover"> Обложка трека</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-title"> Название трека</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-artist"> Исполнитель / Маппер</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-meta"> Сложность и BPM</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-bsr"> BSR код и Дата</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-progress"> Прогресс-бар</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-hp"> HP Бар (Здоровье)</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-stats"> Miss / Combo</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-acc"> Точность (Acc)</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-glow-avatar"> Неоновое свечение</label>
-                <label class="checkbox-row"><input type="checkbox" id="inp-show-debug"> Debug сообщения</label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-bl"> <span data-i18n="modBl">BeatLeader Menu</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-cover"> <span data-i18n="modCover">Track Cover</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-title"> <span data-i18n="modTitle">Track Title</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-artist"> <span data-i18n="modArtist">Artist / Mapper</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-meta"> <span data-i18n="modMeta">Difficulty & BPM</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-bsr"> <span data-i18n="modBsr">BSR & Date</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-progress"> <span data-i18n="modProg">Progress Bar</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-hp"> <span data-i18n="modHp">HP Bar</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-stats"> <span data-i18n="modStats">Miss / Combo</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-acc"> <span data-i18n="modAcc">Accuracy (Acc)</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-glow-avatar"> <span data-i18n="modGlow">Neon Glow</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="inp-show-debug"> <span data-i18n="modDebug">Debug Msgs</span></label>
             </div>
         </div>
         
         <div class="setting-row">
-            <button onclick="saveSettings()">APPLY & RECONNECT</button>
+            <button onclick="saveSettings()" data-i18n="applyBtn">APPLY & RECONNECT</button>
         </div>
     </div>
 
     <div id="debug">System init...</div>
 
     <script>
+        // === TRANSLATIONS / ЛОКАЛИЗАЦИЯ ===
+        const i18n = {
+            en: {
+                sysSetup: "SYSTEM SETUP [F2]",
+                langLabel: "Language / Язык",
+                layoutLabel: "Layout (Alignment)",
+                scaleLabel: "Scale (0.5 - 2.0)",
+                blLabel: "BeatLeader ID / Nickname",
+                blPlaceholder: "Example: 76561198029377687",
+                modulesLabel: "Display Modules (On/Off)",
+                modBl: "BeatLeader Menu",
+                modCover: "Track Cover",
+                modTitle: "Track Title",
+                modArtist: "Artist / Mapper",
+                modMeta: "Difficulty & BPM",
+                modBsr: "BSR Code & Date",
+                modProg: "Progress Bar",
+                modHp: "HP Bar (Health)",
+                modStats: "Miss / Combo",
+                modAcc: "Accuracy (Acc)",
+                modGlow: "Neon Glow",
+                modDebug: "Debug Messages",
+                applyBtn: "APPLY & RECONNECT",
+                waitingSong: "Waiting for song...",
+                loading: "Loading..."
+            },
+            ru: {
+                sysSetup: "СИСТЕМНЫЕ НАСТРОЙКИ [F2]",
+                langLabel: "Язык / Language",
+                layoutLabel: "Выравнивание (Layout)",
+                scaleLabel: "Масштаб (0.5 - 2.0)",
+                blLabel: "BeatLeader ID / Никнейм",
+                blPlaceholder: "Например: 76561198029377687",
+                modulesLabel: "Модули отображения (Вкл/Выкл)",
+                modBl: "BeatLeader Меню",
+                modCover: "Обложка трека",
+                modTitle: "Название трека",
+                modArtist: "Исполнитель / Маппер",
+                modMeta: "Сложность и BPM",
+                modBsr: "BSR код и Дата",
+                modProg: "Прогресс-бар",
+                modHp: "HP Бар (Здоровье)",
+                modStats: "Промахи и Комбо",
+                modAcc: "Точность (Acc)",
+                modGlow: "Неоновое свечение",
+                modDebug: "Сообщения отладки",
+                applyBtn: "ПРИМЕНИТЬ И ПЕРЕПОДКЛЮЧИТЬ",
+                waitingSong: "Ожидание трека...",
+                loading: "Загрузка..."
+            }
+        };
+
         const els = {
             app: document.getElementById('app-container'),
             menuOverlay: document.getElementById('menu-overlay'),
@@ -543,6 +604,7 @@
         };
 
         let config = { 
+            lang: 'ru', // Язык по умолчанию
             ws: 'ws://127.0.0.1:2947/socket', 
             layout: 'top-left', 
             scale: 1.0, 
@@ -567,12 +629,10 @@
         let debugTimeout = null;
         let duration = 0;
         
-        // Переменные для BeatLeader
         let lastBlFetch = 0;
         let isFetchingBL = false;
         let currentProxyIdx = 0; 
         
-        // Массив прокси (первый элемент пустой - попытка загрузки напрямую, т.к. API BL поддерживает CORS)
         const proxies = [
             "", 
             "https://api.codetabs.com/v1/proxy?quest=",
@@ -581,16 +641,42 @@
             "https://thingproxy.freeboard.io/fetch/"
         ];
 
+        function applyLanguage() {
+            const t = i18n[config.lang];
+            
+            // Проверяем, стоят ли сейчас плейсхолдеры, или уже загружены реальные данные
+            const isDefaultTitle = els.title.textContent === i18n.en.waitingSong || els.title.textContent === i18n.ru.waitingSong || els.title.textContent === "Waiting for song...";
+            const isDefaultLoading = els.blName.textContent === i18n.en.loading || els.blName.textContent === i18n.ru.loading || els.blName.textContent === "Loading...";
+
+            // Замена текстов во всех элементах с data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) {
+                    // Пропускаем динамические поля, если в них уже есть данные игрока или трека
+                    if (el.id === 'title' && !isDefaultTitle) return;
+                    if (el.id === 'bl-name' && !isDefaultLoading) return;
+                    
+                    el.textContent = t[key];
+                }
+            });
+
+            // Плейсхолдеры
+            document.getElementById('inp-bl').placeholder = t.blPlaceholder;
+
+            // Динамический HTML атрибут
+            document.documentElement.lang = config.lang;
+        }
+
         function init() {
             els.app.style.display = 'none';
 
             loadSettings();
+            applyLanguage();
             applyLayout();
             applyModules();
             applyGlow();
             connectWS();
             
-            // Фоновое обновление профиля каждые 15 минут
             setInterval(() => fetchBL(), 900000);
             
             document.addEventListener('keydown', (e) => {
@@ -611,7 +697,6 @@
             document.getElementById('inp-glow-avatar').checked = config.glowAvatar !== false;
             
             document.getElementById('inp-show-cover').checked = config.showCover !== false;
-            
             document.getElementById('inp-show-title').checked = config.showTitle !== false;
             document.getElementById('inp-show-artist').checked = config.showArtist !== false;
             document.getElementById('inp-show-meta').checked = config.showMeta !== false;
@@ -622,8 +707,11 @@
             document.getElementById('inp-show-stats').checked = config.showStats !== false;
             document.getElementById('inp-show-acc').checked = config.showAcc !== false;
             
-            const radio = document.querySelector(`input[name="layout"][value="${config.layout}"]`);
-            if(radio) radio.checked = true;
+            const layoutRadio = document.querySelector(`input[name="layout"][value="${config.layout}"]`);
+            if(layoutRadio) layoutRadio.checked = true;
+
+            const langRadio = document.querySelector(`input[name="lang"][value="${config.lang}"]`);
+            if(langRadio) langRadio.checked = true;
         }
 
         function saveSettings() {
@@ -636,7 +724,6 @@
             config.glowAvatar = document.getElementById('inp-glow-avatar').checked;
             
             config.showCover = document.getElementById('inp-show-cover').checked;
-            
             config.showTitle = document.getElementById('inp-show-title').checked;
             config.showArtist = document.getElementById('inp-show-artist').checked;
             config.showMeta = document.getElementById('inp-show-meta').checked;
@@ -647,16 +734,25 @@
             config.showStats = document.getElementById('inp-show-stats').checked;
             config.showAcc = document.getElementById('inp-show-acc').checked;
             
-            const checkedRadio = document.querySelector('input[name="layout"]:checked');
-            if(checkedRadio) config.layout = checkedRadio.value;
+            const checkedLayout = document.querySelector('input[name="layout"]:checked');
+            if(checkedLayout) config.layout = checkedLayout.value;
+
+            const checkedLang = document.querySelector('input[name="lang"]:checked');
+            if(checkedLang) config.lang = checkedLang.value;
             
             localStorage.setItem('bsCyberConfig', JSON.stringify(config));
             els.settings.classList.remove('show');
             
+            applyLanguage();
             applyLayout();
             applyModules();
             applyGlow();
             connectWS();
+
+            // ПРИНУДИТЕЛЬНО обновляем данные BeatLeader при сохранении настроек
+            if (config.showBL) {
+                fetchBL(true);
+            }
         }
 
         function applyLayout() {
@@ -855,11 +951,11 @@
                     showDebug(`BL Profile Loaded Successfully!`);
                 } catch (err) {
                     attempts++;
-                    currentProxyIdx++; // Пробуем следующий прокси
+                    currentProxyIdx++; 
                     showDebug(`BL Error: ${err.message}. Retrying...`);
                     
                     if (attempts < maxAttempts) {
-                        await new Promise(r => setTimeout(r, 2000)); // Задержка 2 сек перед следующей попыткой
+                        await new Promise(r => setTimeout(r, 2000)); 
                     }
                 }
             }
