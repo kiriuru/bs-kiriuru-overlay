@@ -1535,20 +1535,16 @@
             mapTimeMultiplier = 1;
             els.app.style.display = 'none';
 
-            if (reconnectAttempts < 10) {
-                const delay = 5000;
-                const suffix = error && error.message ? ` (${error.message})` : '';
-                showDebug(`❌ WS Lost. Reconnecting in ${delay/1000}s...${suffix}`);
-                reconnectAttempts++;
+            const delay = 5000;
+            const suffix = error && error.message ? ` (${error.message})` : '';
+            showDebug(`❌ WS Lost. Reconnecting in ${delay/1000}s...${suffix}`);
+            reconnectAttempts++;
 
-                clearTimeout(reconnectTimeout);
-                reconnectTimeout = setTimeout(() => {
-                    reconnectScheduled = false;
-                    connectWS();
-                }, delay);
-            } else {
-                showDebug(`❌ Max reconnects reached. F2 to reconfigure.`);
-            }
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = setTimeout(() => {
+                reconnectScheduled = false;
+                connectWS();
+            }, delay);
         }
 
         init();
