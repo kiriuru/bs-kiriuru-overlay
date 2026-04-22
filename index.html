@@ -705,10 +705,13 @@
 
         let lastBlFetch = 0;
         let isFetchingBL = false;
+        let blRequestToken = 0;
+        let blAbortController = null;
+        let bsrRequestToken = 0;
+        let bsrAbortController = null;
         let currentProxyIdx = 0;
 
         const proxies = [
-            "",
             "https://api.codetabs.com/v1/proxy?quest=",
             "https://api.allorigins.win/raw?url=",
             "https://corsproxy.io/?",
@@ -806,20 +809,26 @@
             return proxy ? proxy + encodeURIComponent(originalUrl) : originalUrl;
         }
 
-        async function fetchJSONWithProxyFallback(originalUrl, label = 'Request') {
+        async function fetchJSONWithProxyFallback(originalUrl, label = 'Request', options = {}) {
+            const { signal } = options;
             const totalAttempts = proxies.length;
             let lastError = null;
 
             for (let offset = 0; offset < totalAttempts; offset++) {
+                if (signal?.aborted) {
+                    throw new DOMException('The operation was aborted.', 'AbortError');
+                }
+
                 const idx = (currentProxyIdx + offset) % totalAttempts;
                 const proxy = proxies[idx];
                 const targetUrl = buildTargetUrl(originalUrl, proxy);
 
                 try {
-                    showDebug(`${label} [${offset + 1}/${totalAttempts}] via ${proxy ? 'Proxy' : 'Direct'}`);
+                    showDebug(`${label} [${offset + 1}/${totalAttempts}] via proxy`);
 
                     const res = await fetch(targetUrl, {
-                        headers: { 'Accept': 'application/json' }
+                        headers: { 'Accept': 'application/json' },
+                        signal
                     });
 
                     if (!res.ok) {
@@ -830,6 +839,10 @@
                     currentProxyIdx = idx;
                     return json;
                 } catch (err) {
+                    if (err?.name === 'AbortError') {
+                        throw err;
+                    }
+
                     lastError = err;
                     showDebug(`${label} failed: ${err.message}`);
 
@@ -1213,12 +1226,25 @@
         }
 
         async function fetchBSR(hash) {
+            const requestToken = ++bsrRequestToken;
+
+            if (bsrAbortController) {
+                bsrAbortController.abort();
+            }
+            const controller = new AbortController();
+            bsrAbortController = controller;
+
             try {
                 els.key.textContent = `BSR: Loading...`;
                 els.date.textContent = ``;
-                const res = await fetch(`https://api.beatsaver.com/maps/hash/${hash}`);
+                const res = await fetch(`https://api.beatsaver.com/maps/hash/${hash}`, {
+                    signal: controller.signal
+                });
                 if (!res.ok) throw new Error("Not found");
                 const data = await res.json();
+
+                if (requestToken !== bsrRequestToken) return;
+
                 els.key.textContent = `BSR: ${data.id}`;
 
                 if (data.uploaded) {
@@ -1226,16 +1252,37 @@
                     els.date.textContent = date.toLocaleDateString();
                 }
             } catch (err) {
+                if (err?.name === 'AbortError') return;
+                if (requestToken !== bsrRequestToken) return;
+
                 els.key.textContent = `BSR: N/A`;
                 els.date.textContent = ``;
+            } finally {
+                if (requestToken === bsrRequestToken && bsrAbortController === controller) {
+                    bsrAbortController = null;
+                }
             }
         }
 
         async function fetchBL(force = false) {
-            if (!config.blId || !config.showBL) return;
-            if (isFetchingBL) return;
+            if (!config.blId || !config.showBL) {
+                if (blAbortController) {
+                    blAbortController.abort();
+                    blAbortController = null;
+                }
+                isFetchingBL = false;
+                return;
+            }
+
+            if (isFetchingBL && !force) return;
             if (!force && Date.now() - lastBlFetch < 900000) return;
 
+            const requestToken = ++blRequestToken;
+            if (blAbortController) {
+                blAbortController.abort();
+            }
+            const controller = new AbortController();
+            blAbortController = controller;
             isFetchingBL = true;
 
             try {
@@ -1243,7 +1290,9 @@
                 const isNumeric = /^\d+$/.test(config.blId);
 
                 if (isNumeric) {
-                    const json = await fetchJSONWithProxyFallback(`https://api.beatleader.com/player/${config.blId}?stats=true`, 'BL Player');
+                    const json = await fetchJSONWithProxyFallback(`https://api.beatleader.com/player/${config.blId}?stats=true`, 'BL Player', {
+                        signal: controller.signal
+                    });
                     player = json?.data ? json.data[0] : json;
                     config.resolvedBlId = config.blId;
                     config.resolvedBlQuery = config.blId;
@@ -1252,15 +1301,20 @@
 
                     if (config.resolvedBlId && normalizeName(config.resolvedBlQuery) === normalizedQuery) {
                         try {
-                            const json = await fetchJSONWithProxyFallback(`https://api.beatleader.com/player/${config.resolvedBlId}?stats=true`, 'BL Resolved Player');
+                            const json = await fetchJSONWithProxyFallback(`https://api.beatleader.com/player/${config.resolvedBlId}?stats=true`, 'BL Resolved Player', {
+                                signal: controller.signal
+                            });
                             player = json?.data ? json.data[0] : json;
-                        } catch (_) {
+                        } catch (err) {
+                            if (err?.name === 'AbortError') throw err;
                             player = null;
                         }
                     }
 
                     if (!player) {
-                        const json = await fetchJSONWithProxyFallback(`https://api.beatleader.com/players?search=${encodeURIComponent(config.blId)}`, 'BL Search');
+                        const json = await fetchJSONWithProxyFallback(`https://api.beatleader.com/players?search=${encodeURIComponent(config.blId)}`, 'BL Search', {
+                            signal: controller.signal
+                        });
                         const candidates = Array.isArray(json?.data) ? json.data : [];
                         const resolved = resolveBestPlayer(candidates, config.blId);
 
@@ -1285,15 +1339,25 @@
                     throw new Error('Player not found');
                 }
 
+                if (requestToken !== blRequestToken) return;
+
                 renderBLPlayer(player);
                 lastBlFetch = Date.now();
                 persistConfig();
                 showDebug(`BL Profile Loaded Successfully!`);
             } catch (err) {
+                if (err?.name === 'AbortError') return;
+                if (requestToken !== blRequestToken) return;
+
                 resetBLDisplay(err.message === 'Player not found' ? 'profileNotFound' : 'profileLoadError');
                 showDebug(`BL Error: ${err.message}`);
             } finally {
-                isFetchingBL = false;
+                if (requestToken === blRequestToken) {
+                    isFetchingBL = false;
+                    if (blAbortController === controller) {
+                        blAbortController = null;
+                    }
+                }
             }
         }
 
@@ -1472,7 +1536,7 @@
             els.app.style.display = 'none';
 
             if (reconnectAttempts < 10) {
-                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                const delay = 5000;
                 const suffix = error && error.message ? ` (${error.message})` : '';
                 showDebug(`❌ WS Lost. Reconnecting in ${delay/1000}s...${suffix}`);
                 reconnectAttempts++;
