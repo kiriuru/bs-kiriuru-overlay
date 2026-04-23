@@ -174,7 +174,7 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            min-height: 22px;
+            min-height: 24px;
             padding: 2px 8px;
             border-radius: 999px;
             background: var(--diff-color, rgba(255,255,255,0.16));
@@ -189,8 +189,8 @@
         }
 
         .difficulty-char-icon {
-            width: 14px;
-            height: 14px;
+            width: 18px;
+            height: 18px;
             display: block;
             color: #fff;
             flex-shrink: 0;
@@ -216,10 +216,8 @@
         /* === ШИРОКИЙ PROGRESS BAR === */
         #stats-row {
             display: flex;
-            padding-top: 5px;
-            border-top: 1px dashed rgba(255,255,255,0.1);
-            margin-top: 2px;
             width: 100%;
+            align-self: stretch;
         }
 
         #progress-wrapper {
@@ -322,7 +320,12 @@
         #miss-val { color: var(--neon-red); text-shadow: 0 0 8px rgba(255, 59, 59, 0.6), 1px 1px 2px #000; }
 
         .stat-item.acc-large .label { font-size: 14px; }
-        .stat-item.acc-large #acc-num { font-size: 32px; color: #fff; }
+        .stat-item.acc-large #acc-num {
+            font-size: 32px;
+            color: #fff;
+            -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.7);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+        }
         .stat-item.acc-large #acc-grade { font-size: 32px; }
 
         #bl-wrapper {
@@ -348,13 +351,29 @@
 
         .bl-stat-compact {
             font-size: 13px;
-            color: #ccc;
+            font-weight: 700;
+            color: #fff !important;
+            text-shadow:
+                -1px -1px 0 rgba(0, 0, 0, 0.45),
+                1px -1px 0 rgba(0, 0, 0, 0.45),
+                -1px 1px 0 rgba(0, 0, 0, 0.45),
+                1px 1px 0 rgba(0, 0, 0, 0.45),
+                0 1px 2px rgba(0, 0, 0, 0.4);
         }
         
         .bl-stat-compact span {
             color: var(--neon-cyan);
             font-weight: bold;
-            text-shadow: 0 0 5px rgba(0,255,255,0.5);
+            text-shadow: 0 0 5px rgba(0,255,255,0.5), 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .bl-country-flag {
+            width: 16px;
+            height: 12px;
+            margin-left: 6px;
+            border-radius: 2px;
+            vertical-align: -1px;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
         }
 
         /* === МЕНЮ НАСТРОЕК === */
@@ -475,11 +494,12 @@
                         </div>
                     </div>
                 </div>
-                <div id="stats-row">
-                    <div id="progress-wrapper">
-                        <div id="progress-fill"></div>
-                        <div id="time-prog">0:00 / 0:00</div>
-                    </div>
+            </div>
+
+            <div id="stats-row">
+                <div id="progress-wrapper">
+                    <div id="progress-fill"></div>
+                    <div id="time-prog">0:00 / 0:00</div>
                 </div>
             </div>
             
@@ -747,7 +767,7 @@
         function renderBLPlayer(player) {
             els.blName.textContent = player.name || 'Unknown';
             els.blGlobal.textContent = player.rank ? `#${player.rank.toLocaleString()}` : '#--';
-            els.blLocal.textContent = player.countryRank ? `#${player.countryRank.toLocaleString()} (${player.country || 'N/A'})` : '#-- (N/A)';
+            els.blLocal.innerHTML = formatBLLocal(player.countryRank, player.country);
             els.blPp.textContent = player.pp ? `${Math.round(player.pp).toLocaleString()} pp` : '-- pp';
 
             if (player.avatar) {
@@ -757,6 +777,17 @@
                 els.blAvatar.src = '';
                 els.blAvatarWrapper.style.display = 'none';
             }
+        }
+
+        function formatBLLocal(countryRank, country) {
+            if (!(countryRank > 0)) return '#--';
+
+            const rankText = `#${countryRank.toLocaleString()}`;
+            const countryCode = String(country || '').trim().toUpperCase();
+            if (!/^[A-Z]{2}$/.test(countryCode)) return rankText;
+
+            const flagUrl = `https://flagcdn.com/20x15/${countryCode.toLowerCase()}.png`;
+            return `${rankText}<img class="bl-country-flag" src="${flagUrl}" alt="${countryCode}" title="${countryCode}" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
         }
 
         function normalizeName(value) {
@@ -1050,7 +1081,7 @@
 
             els.statsRow.style.display = config.showProgress ? 'flex' : 'none';
 
-            const showTopPanel = showHeader || config.showProgress;
+            const showTopPanel = showHeader;
             els.topGlassPanel.style.display = showTopPanel ? 'flex' : 'none';
 
             els.hpBarWrapper.style.display = config.showHp ? 'flex' : 'none';
@@ -1170,12 +1201,27 @@
 
         function getCharacteristicIconSvg(characteristic) {
             const normalized = normalizeCharacteristic(characteristic);
-            const icons = {
-                standard: '<svg class="difficulty-char-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13L7 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M9 7L13 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2.4 13.6l1.3-1.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12.3 3.7l1.3-1.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M3 3l10 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2.3 2.3l1.5 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12.2 12.2l1.5 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
-                onesaber: '<svg class="difficulty-char-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13L13 3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M2.2 13.8l1.5-1.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M12.3 3.7l1.5-1.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
-                lawless: '<svg class="difficulty-char-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 6.3c0-.8.6-1.5 1.4-1.5.6 0 1.1.3 1.4.8.3-.5.8-.8 1.4-.8.8 0 1.4.7 1.4 1.5 0 .5-.2.9-.6 1.2v1c0 1.9-1.6 3.5-3.6 3.5S4.8 10.4 4.8 8.5v-1c-.4-.3-.6-.7-.6-1.2Z" fill="currentColor"/><circle cx="6.5" cy="7.5" r="0.8" fill="#0b0b10"/><circle cx="9.5" cy="7.5" r="0.8" fill="#0b0b10"/><path d="M7.1 9.5 8 10.4l.9-.9" stroke="#0b0b10" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            const iconMap = {
+                standard: 'standard',
+                onesaber: 'onesaber',
+                noarrows: 'noarrows',
+                rotation90degree: '90degree',
+                degree90: '90degree',
+                _90degree: '90degree',
+                '90degree': '90degree',
+                rotation360degree: '360degree',
+                degree360: '360degree',
+                _360degree: '360degree',
+                '360degree': '360degree',
+                lightshow: 'lightshow',
+                lawless: 'lawless',
+                legacy: 'legacy'
             };
-            return icons[normalized] || '';
+
+            const icon = iconMap[normalized];
+            if (!icon) return '';
+
+            return `<img class="difficulty-char-icon" src="https://beatsaver.com/static/icons/${icon}.svg" alt="" aria-hidden="true" decoding="async" referrerpolicy="no-referrer" />`;
         }
 
         function formatCharacteristicBadge(characteristic) {
